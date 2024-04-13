@@ -86,7 +86,7 @@ public.device_lists_remote_cache - 124 MB
 public.state_group_edges - 122 MB
 ```
 
-## Cleanup large state_groups_state table
+## Cleanup some large tables
 The state_groups and state_groups_state table may contain a large number of entries from rooms that are no longer known to the server.
 See https://github.com/element-hq/synapse/issues/12821 for background.
 
