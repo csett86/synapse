@@ -1214,7 +1214,8 @@ class EventsBackgroundUpdatesStore(SQLBaseStore):
                 if not isinstance(parent_id, str):
                     continue
 
-                relations_to_insert.append((event_id, parent_id, rel_type))
+                room_id = event_json["room_id"]
+                relations_to_insert.append((room_id, event_id, parent_id, rel_type))
 
             # Insert the missing data, note that we upsert here in case the event
             # has already been processed.
@@ -1223,18 +1224,29 @@ class EventsBackgroundUpdatesStore(SQLBaseStore):
                     txn=txn,
                     table="event_relations",
                     key_names=("event_id",),
-                    key_values=[(r[0],) for r in relations_to_insert],
+                    key_values=[(r[1],) for r in relations_to_insert],
                     value_names=("relates_to_id", "relation_type"),
-                    value_values=[r[1:] for r in relations_to_insert],
+                    value_values=[r[2:] for r in relations_to_insert],
                 )
 
                 # Iterate the parent IDs and invalidate caches.
-                cache_tuples = {(r[1],) for r in relations_to_insert}
                 self._invalidate_cache_and_stream_bulk(  # type: ignore[attr-defined]
-                    txn, self.get_relations_for_event, cache_tuples  # type: ignore[attr-defined]
+                    txn,
+                    self.get_relations_for_event,
+                    {
+                        (
+                            r[0],  # room_id
+                            r[1],  # event_id
+                        )
+                        for r in relations_to_insert
+                    },  # type: ignore[attr-defined]
                 )
                 self._invalidate_cache_and_stream_bulk(  # type: ignore[attr-defined]
-                    txn, self.get_thread_summary, cache_tuples  # type: ignore[attr-defined]
+                    txn,
+                    self.get_thread_summary,
+                    {
+                        (r[1],) for r in relations_to_insert
+                    },  # type: ignore[attr-defined]
                 )
 
             if results:
