@@ -86,6 +86,20 @@ public.device_lists_remote_cache - 124 MB
 public.state_group_edges - 122 MB
 ```
 
+## Cleanup large state_groups_state table
+The state_groups_state table may contain a large number of entries from rooms that are no longer known to the server.
+See https://github.com/element-hq/synapse/issues/12821 for background.
+
+```sql
+SELECT COUNT(*) state_groups_state WHERE room_id NOT IN (SELECT DISTINCT room_id FROM events);
+```
+
+To delete them, shut down synapse and delete them and then start synapse again.
+
+```sql
+DELETE FROM state_groups_state WHERE room_id NOT IN (SELECT DISTINCT room_id FROM events);
+```
+
 ## Show top 20 larger rooms by state events count
 You get the same information when you use the
 [admin API](../../admin_api/rooms.md#list-room-api)
