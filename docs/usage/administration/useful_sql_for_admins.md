@@ -89,10 +89,12 @@ public.state_group_edges - 122 MB
 ## Cleanup some large tables
 The state_groups and state_groups_state table may contain a large number of entries from rooms that are no longer known to the server.
 See https://github.com/element-hq/synapse/issues/12821 for background.
+Same goes for device_lists_changes_in_room, see https://github.com/element-hq/synapse/issues/13043 for more info.
 
 ```sql
 SELECT COUNT(*) state_groups WHERE room_id NOT IN (SELECT DISTINCT room_id FROM rooms);
 SELECT COUNT(*) state_groups_state WHERE room_id NOT IN (SELECT DISTINCT room_id FROM rooms);
+SELECT COUNT(*) device_lists_changes_in_room WHERE room_id NOT IN (SELECT DISTINCT room_id FROM rooms);
 ```
 
 To delete them, shut down synapse, delete them with the queries below, likely run a database reindex and full vacuum and then start synapse again. Beware that the deletion can take quite a long time, depending on how many rows are deleted.
@@ -100,6 +102,7 @@ To delete them, shut down synapse, delete them with the queries below, likely ru
 ```sql
 DELETE FROM state_groups WHERE room_id NOT IN (SELECT DISTINCT room_id FROM rooms);
 DELETE FROM state_groups_state WHERE room_id NOT IN (SELECT DISTINCT room_id FROM rooms);
+DELETE FROM device_lists_changes_in_room WHERE room_id NOT IN (SELECT DISTINCT room_id FROM rooms);
 ```
 
 ## Show top 20 larger rooms by state events count
