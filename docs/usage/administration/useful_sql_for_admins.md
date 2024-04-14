@@ -92,17 +92,17 @@ See https://github.com/element-hq/synapse/issues/12821 for background.
 Same goes for `device_lists_changes_in_room`, see https://github.com/element-hq/synapse/issues/13043 for more info.
 
 ```sql
-SELECT COUNT(*) FROM state_groups WHERE room_id NOT IN (SELECT DISTINCT room_id FROM rooms);
-SELECT COUNT(*) FROM state_groups_state WHERE room_id NOT IN (SELECT DISTINCT room_id FROM rooms);
-SELECT COUNT(*) FROM device_lists_changes_in_room WHERE room_id NOT IN (SELECT DISTINCT room_id FROM rooms);
+SELECT COUNT(*) FROM state_groups WHERE room_id IN (SELECT DISTINCT(state_groups.room_id) AS room_id_gone FROM state_groups LEFT JOIN rooms USING(room_id) WHERE rooms.room_id IS NULL GROUP BY room_id_gone);
+SELECT COUNT(*) FROM state_groups_state WHERE room_id IN (SELECT DISTINCT(state_groups.room_id) AS room_id_gone FROM state_groups LEFT JOIN rooms USING(room_id) WHERE rooms.room_id IS NULL GROUP BY room_id_gone);
+SELECT COUNT(*) FROM device_lists_changes_in_room WHERE room_id IN (SELECT DISTINCT(state_groups.room_id) AS room_id_gone FROM state_groups LEFT JOIN rooms USING(room_id) WHERE rooms.room_id IS NULL GROUP BY room_id_gone);
 ```
 
 To delete them, shut down synapse, delete them with the queries below, likely run a database reindex and full vacuum and then start synapse again. Beware that the deletion can take quite a long time, depending on how many rows are deleted.
 
 ```sql
-DELETE FROM state_groups WHERE room_id NOT IN (SELECT DISTINCT room_id FROM rooms);
-DELETE FROM state_groups_state WHERE room_id NOT IN (SELECT DISTINCT room_id FROM rooms);
-DELETE FROM device_lists_changes_in_room WHERE room_id NOT IN (SELECT DISTINCT room_id FROM rooms);
+DELETE FROM state_groups WHERE room_id IN (SELECT DISTINCT(state_groups.room_id) AS room_id_gone FROM state_groups LEFT JOIN rooms USING(room_id) WHERE rooms.room_id IS NULL GROUP BY room_id_gone);
+DELETE FROM state_groups_state WHERE room_id IN (SELECT DISTINCT(state_groups.room_id) AS room_id_gone FROM state_groups LEFT JOIN rooms USING(room_id) WHERE rooms.room_id IS NULL GROUP BY room_id_gone);
+DELETE FROM device_lists_changes_in_room WHERE room_id IN (SELECT DISTINCT(state_groups.room_id) AS room_id_gone FROM state_groups LEFT JOIN rooms USING(room_id) WHERE rooms.room_id IS NULL GROUP BY room_id_gone);
 ```
 
 ## Show top 20 larger rooms by state events count
