@@ -87,9 +87,9 @@ public.state_group_edges - 122 MB
 ```
 
 ## Cleanup some large tables
-The state_groups and state_groups_state table may contain a large number of entries from rooms that are no longer known to the server.
+The `state_groups` and `state_groups_state` table may contain a large number of entries from rooms that are no longer known to the server.
 See https://github.com/element-hq/synapse/issues/12821 for background.
-Same goes for device_lists_changes_in_room, see https://github.com/element-hq/synapse/issues/13043 for more info.
+Same goes for `device_lists_changes_in_room`, see https://github.com/element-hq/synapse/issues/13043 for more info.
 
 ```sql
 SELECT COUNT(*) FROM state_groups WHERE room_id NOT IN (SELECT DISTINCT room_id FROM rooms);
